@@ -111,7 +111,8 @@ def calculate_metrics(
     days_traded = (snapshots[-1].timestamp - snapshots[0].timestamp).days
     years = days_traded / 365.25
     if years > 0:
-        cagr = ((final_capital / initial_capital) ** (1 / years) - 1) * 100
+        cagr_value = (float(final_capital) / float(initial_capital)) ** (1 / years) - 1
+        cagr = Decimal(str(cagr_value * 100))
     else:
         cagr = Decimal("0")
 
@@ -135,12 +136,12 @@ def calculate_metrics(
 
     # Average gains/losses
     avg_gain = (
-        sum(t.pnl_pct for t in winning_trades) / num_wins
+        Decimal(str(sum(t.pnl_pct for t in winning_trades) / num_wins))
         if num_wins > 0
         else Decimal("0")
     )
     avg_loss = (
-        sum(t.pnl_pct for t in losing_trades) / num_losses
+        Decimal(str(sum(t.pnl_pct for t in losing_trades) / num_losses))
         if num_losses > 0
         else Decimal("0")
     )
@@ -160,7 +161,7 @@ def calculate_metrics(
     gross_profit = sum(t.pnl for t in winning_trades)
     gross_loss = abs(sum(t.pnl for t in losing_trades))
     profit_factor = (
-        gross_profit / gross_loss if gross_loss > 0 else None
+        Decimal(str(gross_profit / gross_loss)) if gross_loss > 0 else None
     )
 
     # Position statistics

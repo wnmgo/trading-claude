@@ -30,9 +30,12 @@ class MarketDataFetcher:
         """
         logger.info("Fetching S&P 500 ticker list")
         try:
-            # Read from Wikipedia
+            # Read from Wikipedia with headers to avoid 403
             url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-            tables = pd.read_html(url)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            tables = pd.read_html(url, storage_options={'headers': headers})
             sp500_table = tables[0]
             tickers = sp500_table["Symbol"].tolist()
             
@@ -42,11 +45,20 @@ class MarketDataFetcher:
             logger.info(f"Found {len(tickers)} S&P 500 tickers")
             return tickers
         except Exception as e:
-            logger.error(f"Failed to fetch S&P 500 tickers: {e}")
-            # Return a smaller list as fallback
+            logger.warning(f"Failed to fetch S&P 500 tickers from Wikipedia: {e}")
+            logger.info("Using fallback list of top stocks")
+            # Return a larger fallback list
             return [
-                "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA",
-                "META", "TSLA", "BRK-B", "JPM", "V",
+                # Tech
+                "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA",
+                # Finance
+                "JPM", "V", "MA", "BAC", "WFC", "GS", "MS",
+                # Healthcare
+                "JNJ", "UNH", "PFE", "ABBV", "TMO", "MRK", "ABT",
+                # Consumer
+                "WMT", "PG", "KO", "PEP", "COST", "HD", "MCD",
+                # Industrial
+                "BA", "CAT", "GE", "HON", "UPS", "LMT", "MMM",
             ]
 
     def get_historical_data(
@@ -69,13 +81,16 @@ class MarketDataFetcher:
         """
         cache_file = (
             self.cache_dir
-            / f"{symbol}_{start_date.date()}_{end_date.date()}.parquet"
+            / f"{symbol}_{start_date.date()}_{end_date.date()}.csv"
         )
 
         # Try to load from cache
         if use_cache and cache_file.exists():
             try:
-                df = pd.read_parquet(cache_file)
+                df = pd.read_csv(cache_file, index_col=0, parse_dates=True)
+                # Remove timezone if present
+                if hasattr(df.index, 'tz') and getattr(df.index, 'tz') is not None:
+                    df.index = df.index.tz_localize(None)  # type: ignore
                 logger.debug(f"Loaded {symbol} data from cache")
                 return df
             except Exception as e:
@@ -96,9 +111,13 @@ class MarketDataFetcher:
                 logger.warning(f"No data returned for {symbol}")
                 return None
 
+            # Remove timezone from index before saving
+            if hasattr(df.index, 'tz') and getattr(df.index, 'tz') is not None:
+                df.index = df.index.tz_localize(None)  # type: ignore
+
             # Save to cache
             if use_cache:
-                df.to_parquet(cache_file)
+                df.to_csv(cache_file)
                 logger.debug(f"Cached {symbol} data")
 
             return df
@@ -205,8 +224,17 @@ class MarketDataFetcher:
             return None
 
         try:
-            # Get the price for the exact date or the closest earlier date
-            df_filtered = df[df.index <= date]
+            # Convert date to pandas Timestamp (no timezone)
+            target_date = pd.Timestamp(date).normalize()
+            
+            # Convert index to datetime and remove timezone/normalize
+            df.index = pd.to_datetime(df.index)
+            if hasattr(df.index, 'tz') and getattr(df.index, 'tz') is not None:
+                df.index = df.index.tz_localize(None)  # type: ignore
+            df.index = df.index.normalize()  # type: ignore
+            
+            # Get the price for the exact date or the closest earlier date  
+            df_filtered = df[df.index <= target_date]
             if df_filtered.empty:
                 return None
             price = df_filtered.iloc[-1]["Close"]
