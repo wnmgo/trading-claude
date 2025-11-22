@@ -1,0 +1,60 @@
+[project]
+name = "trading-claude"
+dynamic = ["version"]
+description = "A backtesting system for testing trading strategies against historical stock market data"
+authors = [
+    {name = "wayne", email = "wayne@aimachine"},
+]
+dependencies = [
+    "yfinance>=0.2.50",
+    "pandas>=2.2.0",
+    "numpy>=2.0.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.6.0",
+    "loguru>=0.7.0",
+    "typer>=0.15.0",
+    "rich>=13.9.0",
+    "scipy>=1.14.0",
+    "matplotlib>=3.9.0",
+    "seaborn>=0.13.0",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["trading", "backtesting", "stock-market", "finance", "investment"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.scripts]
+trading-claude = "trading_claude.cli:app"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-cov>=6.0.0",
+    "black>=24.10.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+    "ipython>=8.30.0",
+    "ipdb>=0.13.13",
+]
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.version]
+source = "scm"
+write_to = "trading_claude/_version.py"
+write_template = "__version__ = '{}'"
