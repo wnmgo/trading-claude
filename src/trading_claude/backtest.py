@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from typing import Optional
 
 import pandas as pd
@@ -12,17 +13,33 @@ from trading_claude.data import MarketDataFetcher
 from trading_claude.metrics import PerformanceMetrics, calculate_metrics
 from trading_claude.models import Order, OrderType, Position, PortfolioSnapshot, Trade
 from trading_claude.strategy import HighestGainerStrategy, TradingStrategy
+from trading_claude.transaction_log import (
+    BacktestCompleteEvent,
+    BacktestInitEvent,
+    OrderEvent,
+    PortfolioSnapshotEvent,
+    PositionUpdateEvent,
+    SignalEvent,
+    TradeCompletedEvent,
+    TransactionLogger,
+)
 
 
 class Portfolio:
     """Manages portfolio state during backtesting."""
 
-    def __init__(self, initial_capital: Decimal, config: BacktestConfig):
+    def __init__(
+        self, 
+        initial_capital: Decimal, 
+        config: BacktestConfig,
+        transaction_logger: Optional[TransactionLogger] = None,
+    ):
         """Initialize portfolio.
 
         Args:
             initial_capital: Starting capital
             config: Backtest configuration
+            transaction_logger: Optional transaction logger
         """
         self.initial_capital = initial_capital
         self.config = config
@@ -30,11 +47,12 @@ class Portfolio:
         self.positions: dict[str, Position] = {}
         self.trades: list[Trade] = []
         self.snapshots: list[PortfolioSnapshot] = []
+        self.transaction_logger = transaction_logger
 
     @property
     def positions_value(self) -> Decimal:
         """Total value of all positions."""
-        return sum(pos.current_value for pos in self.positions.values())
+        return sum((pos.current_value for pos in self.positions.values()), Decimal("0"))
 
     @property
     def total_value(self) -> Decimal:
@@ -84,6 +102,7 @@ class Portfolio:
             total_cost = execution_price * shares + self.config.commission_per_trade
 
         # Execute order
+        cash_before = self.cash
         self.cash -= total_cost
 
         # Add or update position
@@ -109,6 +128,22 @@ class Portfolio:
                 entry_date=timestamp,
                 current_price=execution_price,
             )
+
+        # Log transaction
+        if self.transaction_logger:
+            self.transaction_logger.log(OrderEvent(
+                timestamp=timestamp,
+                order_type=OrderType.BUY,
+                symbol=symbol,
+                shares=shares,
+                target_price=price,
+                actual_price=execution_price,
+                slippage=slippage,
+                commission=self.config.commission_per_trade,
+                total_cost=total_cost,
+                cash_before=cash_before,
+                cash_after=self.cash,
+            ))
 
         logger.info(
             f"BUY {shares} {symbol} @ ${execution_price:.2f} "
@@ -151,6 +186,7 @@ class Portfolio:
         proceeds = execution_price * position.shares - self.config.commission_per_trade
 
         # Update cash
+        cash_before = self.cash
         self.cash += proceeds
 
         # Record trade
@@ -166,6 +202,37 @@ class Portfolio:
             holding_days=(timestamp - position.entry_date).days,
         )
         self.trades.append(trade)
+
+        # Log transaction
+        if self.transaction_logger:
+            self.transaction_logger.log(OrderEvent(
+                timestamp=timestamp,
+                order_type=OrderType.SELL,
+                symbol=symbol,
+                shares=position.shares,
+                target_price=sell_price,
+                actual_price=execution_price,
+                slippage=slippage,
+                commission=self.config.commission_per_trade,
+                total_cost=proceeds,
+                cash_before=cash_before,
+                cash_after=self.cash,
+            ))
+            
+            self.transaction_logger.log(TradeCompletedEvent(
+                timestamp=timestamp,
+                symbol=symbol,
+                entry_date=position.entry_date,
+                exit_date=timestamp,
+                entry_price=position.entry_price,
+                exit_price=execution_price,
+                shares=position.shares,
+                pnl=trade.pnl,
+                pnl_pct=trade.pnl_pct,
+                holding_days=trade.holding_days,
+                total_cost=position.cost_basis,
+                total_proceeds=proceeds,
+            ))
 
         logger.info(
             f"SELL {position.shares} {symbol} @ ${execution_price:.2f} "
@@ -187,7 +254,22 @@ class Portfolio:
         for symbol in list(self.positions.keys()):
             price = data_fetcher.get_price_at_date(symbol, date)
             if price is not None:
-                self.positions[symbol] = self.positions[symbol].update_price(price)
+                old_position = self.positions[symbol]
+                self.positions[symbol] = old_position.update_price(price)
+                
+                # Log position update
+                if self.transaction_logger:
+                    updated_position = self.positions[symbol]
+                    self.transaction_logger.log(PositionUpdateEvent(
+                        timestamp=date,
+                        symbol=symbol,
+                        shares=updated_position.shares,
+                        entry_price=updated_position.entry_price,
+                        entry_date=updated_position.entry_date,
+                        current_price=price,
+                        unrealized_pnl=updated_position.unrealized_pnl,
+                        unrealized_pnl_pct=updated_position.unrealized_pnl_pct,
+                    ))
 
     def take_snapshot(self, timestamp: datetime):
         """Record current portfolio state.
@@ -203,6 +285,29 @@ class Portfolio:
             positions=list(self.positions.values()),
         )
         self.snapshots.append(snapshot)
+        
+        # Log portfolio snapshot
+        if self.transaction_logger:
+            positions_data = [
+                {
+                    "symbol": pos.symbol,
+                    "shares": pos.shares,
+                    "entry_price": str(pos.entry_price),
+                    "current_price": str(pos.current_price) if pos.current_price else None,
+                    "unrealized_pnl": str(pos.unrealized_pnl),
+                    "unrealized_pnl_pct": str(pos.unrealized_pnl_pct),
+                }
+                for pos in self.positions.values()
+            ]
+            
+            self.transaction_logger.log(PortfolioSnapshotEvent(
+                timestamp=timestamp,
+                cash=self.cash,
+                positions_value=self.positions_value,
+                total_value=self.total_value,
+                num_positions=len(self.positions),
+                positions=positions_data,
+            ))
 
 
 class BacktestEngine:
@@ -212,16 +317,25 @@ class BacktestEngine:
         self,
         strategy: TradingStrategy,
         backtest_config: BacktestConfig,
+        transaction_log_file: Optional[Path] = None,
     ):
         """Initialize backtest engine.
 
         Args:
             strategy: Trading strategy to test
             backtest_config: Backtest configuration
+            transaction_log_file: Optional path for transaction log file
         """
         self.strategy = strategy
         self.config = backtest_config
-        self.portfolio = Portfolio(backtest_config.initial_capital, backtest_config)
+        self.transaction_logger = (
+            TransactionLogger(transaction_log_file) if transaction_log_file else None
+        )
+        self.portfolio = Portfolio(
+            backtest_config.initial_capital, 
+            backtest_config,
+            self.transaction_logger,
+        )
 
     def run(self) -> "BacktestResult":
         """Run the backtest.
@@ -233,6 +347,18 @@ class BacktestEngine:
             f"Starting backtest from {self.config.start_date} to {self.config.end_date}"
         )
         logger.info(f"Initial capital: ${self.config.initial_capital}")
+
+        # Log backtest initialization
+        if self.transaction_logger:
+            self.transaction_logger.log(BacktestInitEvent(
+                timestamp=datetime.now(),
+                initial_capital=self.config.initial_capital,
+                start_date=datetime.combine(self.config.start_date, datetime.min.time()),
+                end_date=datetime.combine(self.config.end_date, datetime.min.time()),
+                strategy_name=self.strategy.__class__.__name__,
+                strategy_config=self.strategy.config.model_dump() if hasattr(self.strategy, 'config') else {},
+                backtest_config=self.config.model_dump(),
+            ))
 
         # Generate trading days
         current_date = datetime.combine(self.config.start_date, datetime.min.time())
@@ -247,7 +373,25 @@ class BacktestEngine:
             # Check for sell signals
             for symbol in list(self.portfolio.positions.keys()):
                 position = self.portfolio.positions[symbol]
-                if self.strategy.should_sell(position, current_date):
+                should_sell_result = self.strategy.should_sell(position, current_date)
+                
+                if should_sell_result:
+                    # Log sell signal
+                    if self.transaction_logger:
+                        self.transaction_logger.log(SignalEvent(
+                            timestamp=current_date,
+                            signal_type="sell",
+                            symbol=symbol,
+                            price=position.current_price or position.entry_price,
+                            shares=position.shares,
+                            reason=f"Gain target hit: {position.unrealized_pnl_pct:.2f}%",
+                            metadata={
+                                "unrealized_pnl": str(position.unrealized_pnl),
+                                "unrealized_pnl_pct": str(position.unrealized_pnl_pct),
+                                "holding_days": (current_date - position.entry_date).days,
+                            }
+                        ))
+                    
                     self.portfolio.sell(symbol, current_date)
 
             # Generate buy signals
@@ -264,6 +408,18 @@ class BacktestEngine:
                     symbol, current_date
                 )
                 if price:
+                    # Log buy signal
+                    if self.transaction_logger:
+                        self.transaction_logger.log(SignalEvent(
+                            timestamp=current_date,
+                            signal_type="buy",
+                            symbol=symbol,
+                            price=price,
+                            shares=shares,
+                            reason="Highest gainer signal",
+                            metadata={}
+                        ))
+                    
                     self.portfolio.buy(symbol, shares, price, current_date)
 
             # Take snapshot
@@ -282,6 +438,24 @@ class BacktestEngine:
             self.portfolio.trades,
             self.config.initial_capital,
         )
+
+        # Log backtest completion
+        if self.transaction_logger:
+            self.transaction_logger.log(BacktestCompleteEvent(
+                timestamp=datetime.now(),
+                final_capital=self.portfolio.total_value,
+                total_return=metrics.total_return,
+                total_return_pct=metrics.total_return_pct,
+                total_trades=metrics.total_trades,
+                winning_trades=metrics.winning_trades,
+                losing_trades=metrics.losing_trades,
+                win_rate=metrics.win_rate,
+                metrics=metrics.model_dump(),
+            ))
+            
+            # Save transaction log
+            self.transaction_logger.save()
+            logger.info(f"Transaction log saved to: {self.transaction_logger.output_file}")
 
         return BacktestResult(
             metrics=metrics,

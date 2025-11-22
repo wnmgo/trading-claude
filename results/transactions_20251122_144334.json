@@ -1,0 +1,481 @@
+[
+  {
+    "timestamp": "2025-11-22T14:43:34.235283",
+    "event_type": "backtest_init",
+    "initial_capital": "10000.0",
+    "start_date": "2024-11-04T00:00:00",
+    "end_date": "2024-11-08T00:00:00",
+    "strategy_name": "HighestGainerStrategy",
+    "strategy_config": {
+      "strategy_name": "HighestGainerStrategy",
+      "gain_threshold_pct": "5.0",
+      "stop_loss_pct": null,
+      "max_holding_days": null,
+      "min_market_cap": null,
+      "min_volume": null,
+      "min_price": "5.0",
+      "max_price": null,
+      "lookback_days": 1,
+      "stocks_per_day": 1
+    },
+    "backtest_config": {
+      "start_date": "2024-11-04",
+      "end_date": "2024-11-08",
+      "initial_capital": "10000.0",
+      "max_positions": 2,
+      "max_position_size_pct": "20",
+      "commission_per_trade": "0",
+      "slippage_pct": "0.1",
+      "data_cache_dir": "data/cache"
+    }
+  },
+  {
+    "timestamp": "2024-11-04T00:00:00",
+    "event_type": "signal",
+    "signal_type": "buy",
+    "symbol": "AMZN",
+    "price": "195.77999877929688",
+    "shares": 50,
+    "reason": "Highest gainer signal",
+    "metadata": {}
+  },
+  {
+    "timestamp": "2024-11-04T00:00:00",
+    "event_type": "order",
+    "order_type": "BUY",
+    "symbol": "AMZN",
+    "shares": 10,
+    "target_price": "195.77999877929688",
+    "actual_price": "195.97577877807617688",
+    "slippage": "0.19577999877929688",
+    "commission": "0",
+    "total_cost": "1959.75778778076176880",
+    "cash_before": "10000.0",
+    "cash_after": "8040.24221221923823120",
+    "reason": null
+  },
+  {
+    "timestamp": "2024-11-04T00:00:00",
+    "event_type": "portfolio_snapshot",
+    "cash": "8040.24221221923823120",
+    "positions_value": "1959.75778778076176880",
+    "total_value": "10000.00000000000000000",
+    "num_positions": 1,
+    "positions": [
+      {
+        "symbol": "AMZN",
+        "shares": 10,
+        "entry_price": "195.97577877807617688",
+        "current_price": "195.97577877807617688",
+        "unrealized_pnl": "0E-17",
+        "unrealized_pnl_pct": "0"
+      }
+    ]
+  },
+  {
+    "timestamp": "2024-11-05T00:00:00",
+    "event_type": "position_update",
+    "symbol": "AMZN",
+    "shares": 10,
+    "entry_price": "195.97577877807617688",
+    "entry_date": "2024-11-04T00:00:00",
+    "current_price": "199.5",
+    "unrealized_pnl": "35.24221221923823120",
+    "unrealized_pnl_pct": "1.798294281006361780737013462"
+  },
+  {
+    "timestamp": "2024-11-05T00:00:00",
+    "event_type": "signal",
+    "signal_type": "buy",
+    "symbol": "COST",
+    "price": "885.549072265625",
+    "shares": 9,
+    "reason": "Highest gainer signal",
+    "metadata": {}
+  },
+  {
+    "timestamp": "2024-11-05T00:00:00",
+    "event_type": "order",
+    "order_type": "BUY",
+    "symbol": "COST",
+    "shares": 2,
+    "target_price": "885.549072265625",
+    "actual_price": "886.434621337890625",
+    "slippage": "0.885549072265625",
+    "commission": "0",
+    "total_cost": "1772.869242675781250",
+    "cash_before": "8040.24221221923823120",
+    "cash_after": "6267.37296954345698120",
+    "reason": null
+  },
+  {
+    "timestamp": "2024-11-05T00:00:00",
+    "event_type": "portfolio_snapshot",
+    "cash": "6267.37296954345698120",
+    "positions_value": "3767.869242675781250",
+    "total_value": "10035.24221221923823120",
+    "num_positions": 2,
+    "positions": [
+      {
+        "symbol": "AMZN",
+        "shares": 10,
+        "entry_price": "195.97577877807617688",
+        "current_price": "199.5",
+        "unrealized_pnl": "35.24221221923823120",
+        "unrealized_pnl_pct": "1.798294281006361780737013462"
+      },
+      {
+        "symbol": "COST",
+        "shares": 2,
+        "entry_price": "886.434621337890625",
+        "current_price": "886.434621337890625",
+        "unrealized_pnl": "0E-15",
+        "unrealized_pnl_pct": "0"
+      }
+    ]
+  },
+  {
+    "timestamp": "2024-11-06T00:00:00",
+    "event_type": "position_update",
+    "symbol": "AMZN",
+    "shares": 10,
+    "entry_price": "195.97577877807617688",
+    "entry_date": "2024-11-04T00:00:00",
+    "current_price": "207.08999633789065",
+    "unrealized_pnl": "111.14217559814473120",
+    "unrealized_pnl_pct": "5.671219999283820354124828227"
+  },
+  {
+    "timestamp": "2024-11-06T00:00:00",
+    "event_type": "position_update",
+    "symbol": "COST",
+    "shares": 2,
+    "entry_price": "886.434621337890625",
+    "entry_date": "2024-11-05T00:00:00",
+    "current_price": "894.5819702148438",
+    "unrealized_pnl": "16.294697753906350",
+    "unrealized_pnl_pct": "0.9191144705806310526413503661"
+  },
+  {
+    "timestamp": "2024-11-06T00:00:00",
+    "event_type": "signal",
+    "signal_type": "sell",
+    "symbol": "AMZN",
+    "price": "207.08999633789065",
+    "shares": 10,
+    "reason": "Gain target hit: 5.67%",
+    "metadata": {
+      "unrealized_pnl": "111.14217559814473120",
+      "unrealized_pnl_pct": "5.671219999283820354124828227",
+      "holding_days": 2
+    }
+  },
+  {
+    "timestamp": "2024-11-06T00:00:00",
+    "event_type": "order",
+    "order_type": "SELL",
+    "symbol": "AMZN",
+    "shares": 10,
+    "target_price": "207.08999633789065",
+    "actual_price": "206.88290634155275935",
+    "slippage": "0.20708999633789065",
+    "commission": "0",
+    "total_cost": "2068.82906341552759350",
+    "cash_before": "6267.37296954345698120",
+    "cash_after": "8336.20203295898457470",
+    "reason": null
+  },
+  {
+    "timestamp": "2024-11-06T00:00:00",
+    "event_type": "trade_completed",
+    "symbol": "AMZN",
+    "entry_date": "2024-11-04T00:00:00",
+    "exit_date": "2024-11-06T00:00:00",
+    "entry_price": "195.97577877807617688",
+    "exit_price": "206.88290634155275935",
+    "shares": 10,
+    "pnl": "109.07127563476582470",
+    "pnl_pct": "5.671219999283820354124828227",
+    "holding_days": 2,
+    "total_cost": "1959.75778778076176880",
+    "total_proceeds": "2068.82906341552759350"
+  },
+  {
+    "timestamp": "2024-11-06T00:00:00",
+    "event_type": "signal",
+    "signal_type": "buy",
+    "symbol": "TSLA",
+    "price": "288.5299987792969",
+    "shares": 33,
+    "reason": "Highest gainer signal",
+    "metadata": {}
+  },
+  {
+    "timestamp": "2024-11-06T00:00:00",
+    "event_type": "portfolio_snapshot",
+    "cash": "8336.20203295898457470",
+    "positions_value": "1789.1639404296876",
+    "total_value": "10125.36597338867217470",
+    "num_positions": 1,
+    "positions": [
+      {
+        "symbol": "COST",
+        "shares": 2,
+        "entry_price": "886.434621337890625",
+        "current_price": "894.5819702148438",
+        "unrealized_pnl": "16.294697753906350",
+        "unrealized_pnl_pct": "0.9191144705806310526413503661"
+      }
+    ]
+  },
+  {
+    "timestamp": "2024-11-07T00:00:00",
+    "event_type": "position_update",
+    "symbol": "COST",
+    "shares": 2,
+    "entry_price": "886.434621337890625",
+    "entry_date": "2024-11-05T00:00:00",
+    "current_price": "909.1857299804688",
+    "unrealized_pnl": "45.502217285156350",
+    "unrealized_pnl_pct": "2.566586197664533779028422155"
+  },
+  {
+    "timestamp": "2024-11-07T00:00:00",
+    "event_type": "signal",
+    "signal_type": "buy",
+    "symbol": "TSLA",
+    "price": "296.9100036621094",
+    "shares": 28,
+    "reason": "Highest gainer signal",
+    "metadata": {}
+  },
+  {
+    "timestamp": "2024-11-07T00:00:00",
+    "event_type": "order",
+    "order_type": "BUY",
+    "symbol": "TSLA",
+    "shares": 6,
+    "target_price": "296.9100036621094",
+    "actual_price": "297.2069136657715094",
+    "slippage": "0.2969100036621094",
+    "commission": "0",
+    "total_cost": "1783.2414819946290564",
+    "cash_before": "8336.20203295898457470",
+    "cash_after": "6552.96055096435551830",
+    "reason": null
+  },
+  {
+    "timestamp": "2024-11-07T00:00:00",
+    "event_type": "portfolio_snapshot",
+    "cash": "6552.96055096435551830",
+    "positions_value": "3601.6129419555666564",
+    "total_value": "10154.57349291992217470",
+    "num_positions": 2,
+    "positions": [
+      {
+        "symbol": "COST",
+        "shares": 2,
+        "entry_price": "886.434621337890625",
+        "current_price": "909.1857299804688",
+        "unrealized_pnl": "45.502217285156350",
+        "unrealized_pnl_pct": "2.566586197664533779028422155"
+      },
+      {
+        "symbol": "TSLA",
+        "shares": 6,
+        "entry_price": "297.2069136657715094",
+        "current_price": "297.2069136657715094",
+        "unrealized_pnl": "0E-16",
+        "unrealized_pnl_pct": "0"
+      }
+    ]
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "position_update",
+    "symbol": "COST",
+    "shares": 2,
+    "entry_price": "886.434621337890625",
+    "entry_date": "2024-11-05T00:00:00",
+    "current_price": "938.900634765625",
+    "unrealized_pnl": "104.932026855468750",
+    "unrealized_pnl_pct": "5.918768532364826374904095818"
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "position_update",
+    "symbol": "TSLA",
+    "shares": 6,
+    "entry_price": "297.2069136657715094",
+    "entry_date": "2024-11-07T00:00:00",
+    "current_price": "321.2200012207031",
+    "unrealized_pnl": "144.0785253295895436",
+    "unrealized_pnl_pct": "8.079585787138137783390842264"
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "signal",
+    "signal_type": "sell",
+    "symbol": "COST",
+    "price": "938.900634765625",
+    "shares": 2,
+    "reason": "Gain target hit: 5.92%",
+    "metadata": {
+      "unrealized_pnl": "104.932026855468750",
+      "unrealized_pnl_pct": "5.918768532364826374904095818",
+      "holding_days": 3
+    }
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "order",
+    "order_type": "SELL",
+    "symbol": "COST",
+    "shares": 2,
+    "target_price": "938.900634765625",
+    "actual_price": "937.961734130859375",
+    "slippage": "0.938900634765625",
+    "commission": "0",
+    "total_cost": "1875.923468261718750",
+    "cash_before": "6552.96055096435551830",
+    "cash_after": "8428.88401922607426830",
+    "reason": null
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "trade_completed",
+    "symbol": "COST",
+    "entry_date": "2024-11-05T00:00:00",
+    "exit_date": "2024-11-08T00:00:00",
+    "entry_price": "886.434621337890625",
+    "exit_price": "937.961734130859375",
+    "shares": 2,
+    "pnl": "103.054225585937500",
+    "pnl_pct": "5.918768532364826374904095818",
+    "holding_days": 3,
+    "total_cost": "1772.869242675781250",
+    "total_proceeds": "1875.923468261718750"
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "signal",
+    "signal_type": "sell",
+    "symbol": "TSLA",
+    "price": "321.2200012207031",
+    "shares": 6,
+    "reason": "Gain target hit: 8.08%",
+    "metadata": {
+      "unrealized_pnl": "144.0785253295895436",
+      "unrealized_pnl_pct": "8.079585787138137783390842264",
+      "holding_days": 1
+    }
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "order",
+    "order_type": "SELL",
+    "symbol": "TSLA",
+    "shares": 6,
+    "target_price": "321.2200012207031",
+    "actual_price": "320.8987812194823969",
+    "slippage": "0.3212200012207031",
+    "commission": "0",
+    "total_cost": "1925.3926873168943814",
+    "cash_before": "8428.88401922607426830",
+    "cash_after": "10354.27670654296864970",
+    "reason": null
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "trade_completed",
+    "symbol": "TSLA",
+    "entry_date": "2024-11-07T00:00:00",
+    "exit_date": "2024-11-08T00:00:00",
+    "entry_price": "297.2069136657715094",
+    "exit_price": "320.8987812194823969",
+    "shares": 6,
+    "pnl": "142.1512053222653250",
+    "pnl_pct": "8.079585787138137783390842264",
+    "holding_days": 1,
+    "total_cost": "1783.2414819946290564",
+    "total_proceeds": "1925.3926873168943814"
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "signal",
+    "signal_type": "buy",
+    "symbol": "META",
+    "price": "587.4927368164062",
+    "shares": 17,
+    "reason": "Highest gainer signal",
+    "metadata": {}
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "order",
+    "order_type": "BUY",
+    "symbol": "META",
+    "shares": 3,
+    "target_price": "587.4927368164062",
+    "actual_price": "588.0802295532226062",
+    "slippage": "0.5874927368164062",
+    "commission": "0",
+    "total_cost": "1764.2406886596678186",
+    "cash_before": "10354.27670654296864970",
+    "cash_after": "8590.03601788330083110",
+    "reason": null
+  },
+  {
+    "timestamp": "2024-11-08T00:00:00",
+    "event_type": "portfolio_snapshot",
+    "cash": "8590.03601788330083110",
+    "positions_value": "1764.2406886596678186",
+    "total_value": "10354.27670654296864970",
+    "num_positions": 1,
+    "positions": [
+      {
+        "symbol": "META",
+        "shares": 3,
+        "entry_price": "588.0802295532226062",
+        "current_price": "588.0802295532226062",
+        "unrealized_pnl": "0E-16",
+        "unrealized_pnl_pct": "0"
+      }
+    ]
+  },
+  {
+    "timestamp": "2025-11-22T14:43:34.487340",
+    "event_type": "backtest_complete",
+    "final_capital": "10354.27670654296864970",
+    "total_return": "354.27670654296864970",
+    "total_return_pct": "3.54276706542968649700",
+    "total_trades": 3,
+    "winning_trades": 3,
+    "losing_trades": 0,
+    "win_rate": "100.0",
+    "metrics": {
+      "total_return": "354.27670654296864970",
+      "total_return_pct": "3.54276706542968649700",
+      "cagr": "2302.280463666993",
+      "sharpe_ratio": "20.311272090103408",
+      "sortino_ratio": null,
+      "max_drawdown": "0.0",
+      "max_drawdown_duration": 1,
+      "total_trades": 3,
+      "winning_trades": 3,
+      "losing_trades": 0,
+      "win_rate": "100.0",
+      "avg_gain": "6.556524772928928170806588767",
+      "avg_loss": "0",
+      "avg_holding_days": "2.0",
+      "largest_gain": "8.079585787138137783390842264",
+      "largest_loss": "5.671219999283820354124828227",
+      "profit_factor": null,
+      "avg_num_positions": "1.4",
+      "max_num_positions": 2,
+      "days_traded": 4,
+      "initial_capital": "10000.0",
+      "final_capital": "10354.27670654296864970"
+    }
+  }
+]

@@ -142,7 +142,14 @@ def backtest(
 
     data_fetcher = MarketDataFetcher(cache_dir=Path(cache_dir))
     strategy = HighestGainerStrategy(strategy_config, data_fetcher)
-    engine = BacktestEngine(strategy, backtest_config)
+    
+    # Prepare transaction log file
+    output_dir = Path("results")
+    output_dir.mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    transaction_log_file = output_dir / f"transactions_{timestamp}.json"
+    
+    engine = BacktestEngine(strategy, backtest_config, transaction_log_file)
 
     # Run backtest
     try:
@@ -156,7 +163,6 @@ def backtest(
         output_dir = Path("results")
         output_dir.mkdir(exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         trades_file = output_dir / f"trades_{timestamp}.csv"
         equity_file = output_dir / f"equity_{timestamp}.csv"
 
@@ -165,7 +171,8 @@ def backtest(
 
         console.print(f"[green]✓[/green] Results saved to:")
         console.print(f"  • {trades_file}")
-        console.print(f"  • {equity_file}\n")
+        console.print(f"  • {equity_file}")
+        console.print(f"  • {transaction_log_file}\n")
 
     except KeyboardInterrupt:
         console.print("\n[yellow]Backtest interrupted by user[/yellow]")
