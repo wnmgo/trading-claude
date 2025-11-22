@@ -255,6 +255,7 @@ class BacktestEngine:
                 current_date,
                 self.portfolio.cash,
                 list(self.portfolio.positions.values()),
+                self.config.max_positions,
             )
 
             # Execute buy orders

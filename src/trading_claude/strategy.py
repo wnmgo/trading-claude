@@ -31,6 +31,7 @@ class TradingStrategy(ABC):
         current_date: datetime,
         cash_available: Decimal,
         current_positions: list[Position],
+        max_positions: int = 10,
     ) -> list[tuple[str, int]]:
         """Generate buy signals for the current date.
 
@@ -81,6 +82,7 @@ class HighestGainerStrategy(TradingStrategy):
         current_date: datetime,
         cash_available: Decimal,
         current_positions: list[Position],
+        max_positions: int = 10,
     ) -> list[tuple[str, int]]:
         """Generate buy signals by selecting highest gainers.
 
@@ -88,13 +90,13 @@ class HighestGainerStrategy(TradingStrategy):
             current_date: Current trading date
             cash_available: Available cash for trading
             current_positions: Current open positions
+            max_positions: Maximum number of positions allowed
 
         Returns:
             List of (symbol, shares) tuples to buy
         """
         # Check if we can buy more positions
         num_current_positions = len(current_positions)
-        max_positions = self.config.max_positions or 10
         
         if num_current_positions >= max_positions:
             logger.debug(f"Already at max positions ({max_positions})")
