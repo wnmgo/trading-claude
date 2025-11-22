@@ -29,7 +29,7 @@ Requires Python 3.10 or higher.
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/wnmgo/trading-claude.git
 cd trading-claude
 
 # Install dependencies using PDM
