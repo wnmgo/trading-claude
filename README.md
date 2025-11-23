@@ -16,6 +16,7 @@ This system allows you to test various trading strategies using historical data 
 - **Historical Data**: Fetch data from Yahoo Finance (free, 5+ years of history)
 - **Portfolio Management**: Track multiple positions simultaneously
 - **Transaction Logging**: Comprehensive audit trail in machine-parsable JSON format
+- **Interactive Dashboard**: Beautiful web-based visualization of backtest results
 - **Performance Metrics**:
   - Total Return & CAGR
   - Sharpe & Sortino Ratios
@@ -103,6 +104,31 @@ result.print_summary()
 result.get_trades_df().to_csv("trades.csv")
 result.get_equity_curve().to_csv("equity.csv")
 ```
+
+## Dashboard Visualization
+
+View your backtest results in a beautiful, interactive dashboard:
+
+```bash
+# Start the dashboard server
+python serve_dashboard.py
+
+# Then open http://localhost:9110/dashboard.html in your browser
+# Drag & drop your transaction log JSON file to visualize:
+#  - Equity curve chart
+#  - Performance metrics
+#  - Portfolio composition
+#  - Current holdings
+#  - Trade history with filters
+```
+
+**Features:**
+- 📊 Real-time equity curve visualization
+- 📈 Portfolio composition pie chart
+- 💰 Performance metrics cards
+- 📋 Interactive trade history with search and filters
+- 🎨 Beautiful dark theme inspired by modern trading platforms
+- 📱 Responsive design for mobile and desktop
 
 ## Strategy: Highest Gainer
 
