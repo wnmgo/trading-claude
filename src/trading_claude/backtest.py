@@ -349,21 +349,31 @@ class BacktestEngine:
         )
         logger.info(f"Initial capital: ${self.config.initial_capital}")
 
+        # Preload all data for performance
+        logger.info("Preloading market data...")
+        start_datetime = datetime.combine(self.config.start_date, datetime.min.time())
+        end_datetime = datetime.combine(self.config.end_date, datetime.min.time())
+        self.strategy.data_fetcher.preload_data(
+            self.strategy.sp500_tickers,
+            start_datetime - timedelta(days=10),  # Extra buffer for lookback
+            end_datetime
+        )
+        
         # Log backtest initialization
         if self.transaction_logger:
             self.transaction_logger.log(BacktestInitEvent(
                 timestamp=datetime.now(),
                 initial_capital=self.config.initial_capital,
-                start_date=datetime.combine(self.config.start_date, datetime.min.time()),
-                end_date=datetime.combine(self.config.end_date, datetime.min.time()),
+                start_date=start_datetime,
+                end_date=end_datetime,
                 strategy_name=self.strategy.__class__.__name__,
                 strategy_config=self.strategy.config.model_dump() if hasattr(self.strategy, 'config') else {},
                 backtest_config=self.config.model_dump(),
             ))
 
         # Generate trading days
-        current_date = datetime.combine(self.config.start_date, datetime.min.time())
-        end_date = datetime.combine(self.config.end_date, datetime.min.time())
+        current_date = start_datetime
+        end_date = end_datetime
 
         while current_date <= end_date:
             # Step 1: Execute pending buy signals from YESTERDAY at TODAY's OPEN price

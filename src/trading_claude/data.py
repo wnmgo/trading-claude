@@ -11,16 +11,17 @@ from loguru import logger
 
 
 class MarketDataFetcher:
-    """Fetches and caches market data from Yahoo Finance."""
+    """Fetches and caches market data."""
 
-    def __init__(self, cache_dir: Optional[Path] = None):
+    def __init__(self, cache_dir: Path = Path("data/cache")):
         """Initialize the data fetcher.
 
         Args:
             cache_dir: Directory to cache downloaded data
         """
-        self.cache_dir = cache_dir or Path("data/cache")
+        self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self._data_cache: dict[str, pd.DataFrame] = {}  # In-memory cache
 
     def get_sp500_tickers(self) -> list[str]:
         """Get list of S&P 500 stock tickers.
@@ -68,60 +69,58 @@ class MarketDataFetcher:
         end_date: datetime,
         use_cache: bool = True,
     ) -> Optional[pd.DataFrame]:
-        """Fetch historical price data for a symbol.
+        """Get historical OHLCV data for a symbol.
 
         Args:
             symbol: Stock ticker symbol
-            start_date: Start date for historical data
-            end_date: End date for historical data
+            start_date: Start date for data
+            end_date: End date for data
             use_cache: Whether to use cached data
 
         Returns:
-            DataFrame with OHLCV data, or None if fetch fails
+            DataFrame with OHLCV data, or None if failed
         """
-        cache_file = (
-            self.cache_dir
-            / f"{symbol}_{start_date.date()}_{end_date.date()}.csv"
-        )
-
-        # Try to load from cache
+        # Check in-memory cache first
+        cache_key = f"{symbol}_{start_date.date()}_{end_date.date()}"
+        if cache_key in self._data_cache:
+            return self._data_cache[cache_key]
+        
+        # Check file cache
+        cache_file = self.cache_dir / f"{cache_key}.csv"
         if use_cache and cache_file.exists():
-            try:
-                df = pd.read_csv(cache_file, index_col=0, parse_dates=True)
-                # Remove timezone if present
-                if hasattr(df.index, 'tz') and getattr(df.index, 'tz') is not None:
-                    df.index = df.index.tz_localize(None)  # type: ignore
-                logger.debug(f"Loaded {symbol} data from cache")
-                return df
-            except Exception as e:
-                logger.warning(f"Failed to load cache for {symbol}: {e}")
-
-        # Fetch from Yahoo Finance
+            logger.debug(f"Loaded {symbol} data from cache")
+            df = pd.read_csv(cache_file, index_col=0, parse_dates=True)
+            self._data_cache[cache_key] = df  # Store in memory
+            return df
+        
+        # Fetch from yfinance
         try:
             logger.debug(f"Fetching {symbol} data from Yahoo Finance")
             ticker = yf.Ticker(symbol)
             df = ticker.history(
                 start=start_date,
                 end=end_date,
-                auto_adjust=True,  # Adjust for splits and dividends
+                auto_adjust=True,
                 actions=False,
             )
-
+            
             if df.empty:
                 logger.warning(f"No data returned for {symbol}")
                 return None
-
-            # Remove timezone from index before saving
+            
+            # Remove timezone from index
             if hasattr(df.index, 'tz') and getattr(df.index, 'tz') is not None:
                 df.index = df.index.tz_localize(None)  # type: ignore
-
+            
             # Save to cache
             if use_cache:
                 df.to_csv(cache_file)
                 logger.debug(f"Cached {symbol} data")
-
+            
+            # Store in memory
+            self._data_cache[cache_key] = df
             return df
-
+        
         except Exception as e:
             logger.error(f"Failed to fetch data for {symbol}: {e}")
             return None
@@ -149,6 +148,24 @@ class MarketDataFetcher:
         except Exception as e:
             logger.warning(f"Failed to fetch info for {symbol}: {e}")
             return {"symbol": symbol}
+
+    def preload_data(
+        self,
+        tickers: list[str],
+        start_date: datetime,
+        end_date: datetime,
+    ) -> None:
+        """Preload all ticker data for the backtest period.
+        
+        Args:
+            tickers: List of ticker symbols to preload
+            start_date: Start date for data
+            end_date: End date for data
+        """
+        logger.info(f"Preloading data for {len(tickers)} tickers...")
+        for ticker in tickers:
+            self.get_historical_data(ticker, start_date, end_date)
+        logger.info("Data preload complete")
 
     def get_daily_gainers(
         self,

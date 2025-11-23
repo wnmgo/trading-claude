@@ -18,10 +18,10 @@ def main():
 
     print("🚀 Trading Claude - Example Backtest\n")
 
-    # Create configurations
+    # Create configurations - Use 1 year for faster testing
     backtest_config = BacktestConfig(
-        start_date=date(2020, 1, 1),
-        end_date=date(2025, 1, 1),
+        start_date=date(2024, 1, 1),
+        end_date=date(2024, 12, 31),
         initial_capital=Decimal("50000"),
         max_positions=10,
     )
