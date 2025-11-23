@@ -206,15 +206,17 @@ class MarketDataFetcher:
         self,
         symbol: str,
         date: datetime,
+        price_type: str = "Close",
     ) -> Optional[Decimal]:
-        """Get closing price for a symbol at a specific date.
+        """Get price for a symbol at a specific date.
 
         Args:
             symbol: Stock ticker symbol
             date: Date to get price for
+            price_type: Type of price to get ("Close" or "Open")
 
         Returns:
-            Closing price as Decimal, or None if not available
+            Price as Decimal, or None if not available
         """
         start_date = date - timedelta(days=7)  # Buffer for weekends/holidays
         end_date = date + timedelta(days=1)
@@ -237,8 +239,24 @@ class MarketDataFetcher:
             df_filtered = df[df.index <= target_date]
             if df_filtered.empty:
                 return None
-            price = df_filtered.iloc[-1]["Close"]
+            price = df_filtered.iloc[-1][price_type]
             return Decimal(str(price))
         except Exception as e:
-            logger.error(f"Error getting price for {symbol} at {date}: {e}")
+            logger.error(f"Error getting {price_type} price for {symbol} at {date}: {e}")
             return None
+
+    def get_open_price(
+        self,
+        symbol: str,
+        date: datetime,
+    ) -> Optional[Decimal]:
+        """Get opening price for a symbol at a specific date.
+
+        Args:
+            symbol: Stock ticker symbol
+            date: Date to get opening price for
+
+        Returns:
+            Opening price as Decimal, or None if not available
+        """
+        return self.get_price_at_date(symbol, date, price_type="Open")

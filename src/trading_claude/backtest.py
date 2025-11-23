@@ -336,6 +336,7 @@ class BacktestEngine:
             backtest_config,
             self.transaction_logger,
         )
+        self.pending_signals: list[tuple[str, int, datetime]] = []  # (symbol, shares, signal_date)
 
     def run(self) -> "BacktestResult":
         """Run the backtest.
@@ -365,12 +366,37 @@ class BacktestEngine:
         end_date = datetime.combine(self.config.end_date, datetime.min.time())
 
         while current_date <= end_date:
-            # Update position prices
+            # Step 1: Execute pending buy signals from YESTERDAY at TODAY's OPEN price
+            # This eliminates look-ahead bias
+            if self.pending_signals:
+                executed_signals = []
+                for symbol, shares, signal_date in self.pending_signals:
+                    open_price = self.strategy.data_fetcher.get_open_price(
+                        symbol, current_date
+                    )
+                    if open_price:
+                        success = self.portfolio.buy(symbol, shares, open_price, current_date)
+                        if success:
+                            executed_signals.append((symbol, shares, signal_date))
+                            logger.info(
+                                f"Executed buy: {symbol} {shares} shares @ ${open_price:.2f} "
+                                f"(signal from {signal_date.date()})"
+                            )
+                    else:
+                        logger.warning(
+                            f"Could not get open price for {symbol} on {current_date.date()}, "
+                            f"order not executed"
+                        )
+                
+                # Clear executed signals
+                self.pending_signals = []
+            
+            # Step 2: Update position prices
             self.portfolio.update_prices(
                 current_date, self.strategy.data_fetcher
             )
 
-            # Check for sell signals
+            # Step 3: Check for sell signals and execute immediately
             for symbol in list(self.portfolio.positions.keys()):
                 position = self.portfolio.positions[symbol]
                 should_sell_result = self.strategy.should_sell(position, current_date)
@@ -394,7 +420,7 @@ class BacktestEngine:
                     
                     self.portfolio.sell(symbol, current_date)
 
-            # Generate buy signals
+            # Step 4: Generate buy signals for TOMORROW's execution
             buy_signals = self.strategy.generate_signals(
                 current_date,
                 self.portfolio.cash,
@@ -402,25 +428,31 @@ class BacktestEngine:
                 self.config.max_positions,
             )
 
-            # Execute buy orders
+            # Step 5: Log signals and queue for tomorrow's execution
             for symbol, shares in buy_signals:
-                price = self.strategy.data_fetcher.get_price_at_date(
+                # Get closing price for logging purposes only
+                close_price = self.strategy.data_fetcher.get_price_at_date(
                     symbol, current_date
                 )
-                if price:
+                if close_price:
                     # Log buy signal
                     if self.transaction_logger:
                         self.transaction_logger.log(SignalEvent(
                             timestamp=current_date,
                             signal_type="buy",
                             symbol=symbol,
-                            price=price,
+                            price=close_price,
                             shares=shares,
-                            reason="Highest gainer signal",
-                            metadata={}
+                            reason="Highest gainer signal - will execute at next day's open",
+                            metadata={"execution_date": str((current_date + timedelta(days=1)).date())}
                         ))
                     
-                    self.portfolio.buy(symbol, shares, price, current_date)
+                    # Queue for tomorrow's execution
+                    self.pending_signals.append((symbol, shares, current_date))
+                    logger.info(
+                        f"Buy signal: {symbol} {shares} shares @ ${close_price:.2f} "
+                        f"(will execute at tomorrow's open)"
+                    )
 
             # Take snapshot
             self.portfolio.take_snapshot(current_date)
